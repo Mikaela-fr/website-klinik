@@ -18,6 +18,6 @@
     }
 @endphp
 
-<{{ $type }} {{ $type == "a" ? 'href=' . $href . '' : '' }} class="{{ $class . " " . $baseClass }}" {!! $attrs !!}>
+<{{ $type }} {!! $type == "a" ? 'href=' . $href . '' : '' !!} class="{{ $class . " " . $baseClass }}" {!! $attrs !!}>
     {{ $slot }}
 </{{ $type }}>

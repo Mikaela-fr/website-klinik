@@ -27,6 +27,14 @@ export default {
           DEFAULT: '#222222',
           light: '#444444',
           dark: '#000000'
+        },
+        success: {
+          DEFAULT: '#1F7D53',
+          dark: '#255F38'
+        },
+        danger: {
+          DEFAULT: '#BE3144',
+          dark: '#872341'
         }
       },
       fontFamily: {
