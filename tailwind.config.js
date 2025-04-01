@@ -40,7 +40,32 @@ export default {
       fontFamily: {
         poppins: ['Poppins', 'Arial', 'sans-serif'],
         roboto: ['Roboto', 'Arial', 'sans-serif']
-      }
+      },
+      animation: {
+        blink: 'blink 1s infinite',
+        marquee: 'marquee 1s linear infinite',
+        'fade-in': 'fade-in 1s ease-in',
+        'fade-out': 'fade-out 1s ease-out',
+      },
+      keyframes: {
+        blink: {
+          '0%': { opacity: '0' },
+          '50%': { opacity: '1' },
+          '100%': { opacity: '0' }
+        },
+        marquee: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        "fade-in": {
+          '0%': { opacity: 0 },
+          '100%': { opacity: 1 }
+        },
+        "fade-out": {
+          '0%': { opacity: 1 },
+          '100%': { opacity: 0 }
+        },
+      },
     },
   },
   plugins: [],

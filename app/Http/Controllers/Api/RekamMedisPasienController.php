@@ -57,24 +57,17 @@ class RekamMedisPasienController extends Controller
             return CommonResponse::forbidden();
         }
 
-        $next = RekamMedis::whereDate('created_at', Carbon::today())->where('status', 'Menunggu')->min('no_antrian');
-        $current = RekamMedis::whereDate('created_at', Carbon::today())->where('status', 'Selesai')->max('no_antrian');
-
         $data = $request->all();
         $data['no_antrian'] = RekamMedis::whereDate('created_at', Carbon::today())->max('no_antrian') + 1;
-
-        if ($current == null) $current = "-";
-
-        if ($next == null) {
-            broadcast(new AntrianUpdate(json_encode([
-                'current' => $current,
-                'next' => $data['no_antrian']
-            ])));
-        }
 
         $pasien = Pasien::find($pasienId);
         $rekamMedis = $pasien->rekamMedis()->create($data);
         $rekamMedis = RekamMedis::with('pasien')->find($rekamMedis->kode);
+
+        broadcast(new AntrianUpdate(json_encode([
+            'rekam_medis' => $rekamMedis->toArray(),
+            'type' => 'insert'
+        ])));
 
         broadcast(new RekamMedisInsert(json_encode($rekamMedis->toArray())));
 
@@ -159,6 +152,10 @@ class RekamMedisPasienController extends Controller
         }
         $rekamMedis->delete();
 
+        broadcast(new AntrianUpdate(json_encode([
+            'rekam_medis' => $rekamMedis->toArray(),
+            'type' => 'delete'
+        ])));
         broadcast(new RekamMedisDelete(json_encode($rekamMedis->toArray())));
 
         return CommonResponse::ok($rekamMedis->toArray());
@@ -182,7 +179,9 @@ class RekamMedisPasienController extends Controller
         broadcast(new AntrianUpdate(json_encode([
             'current' => $current,
             'next' => $next,
-            'voice' => 'Nomor antrian ' . $current . ', atas nama ' . $rekamMedis->pasien->nama_pasien . ', mohon menuju ruang pemeriksaan'
+            'voice' => 'Nomor antrian ' . $current . ', atas nama ' . $rekamMedis->pasien->nama_pasien . ', mohon menuju ruang pemeriksaan',
+            'rekam_medis' => $rekamMedis->toArray(),
+            'type' => 'status'
         ])));
 
         return CommonResponse::ok($rekamMedis->toArray());
