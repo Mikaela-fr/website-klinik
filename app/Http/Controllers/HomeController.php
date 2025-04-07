@@ -21,8 +21,14 @@ class HomeController extends Controller
         $multimedia = Carousel::where('jenis', 'like', 'video%')->orderBy('urutan', 'asc')->get();
         $teks = Carousel::where('jenis', 'text')->orderBy('urutan', 'asc')->get();
 
+        $teksPanjang = [];
+
         foreach ($teks as $item) {
             $teksPanjang[] = $item->isi;
+        }
+
+        if (count($teksPanjang) > 1) {
+            array_shift($teksPanjang);
         }
 
         $teksPanjangGabung = implode(" | ", $teksPanjang);
