@@ -8,15 +8,18 @@
                     style="z-index: {{ $loop->index == 0 ? 1 : -1 }}"></video>
             @endforeach
         </div>
-        <div class="col-span-4 row-span-5 p-4 bg-primary-light text-white">
+        <div class="col-span-4 row-span-5 p-4 bg-primary-light text-black">
             <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
             <div id="patientList" class="overflow-hidden text-3xl">
-                @foreach ($pasienMenunggu as $item)
-                    <div class="flex gap-2 p-2" id="RM{{ $item->kode }}">
-                        <span>{{ $item->no_antrian }}</span>
-                        <span>{{ $item->pasien->nama_pasien }}</span>
-                    </div>
-                @endforeach
+                <table class="w-full">
+                    <tr class="font-bold">
+                        @foreach ($pasienMenunggu as $item)
+                            <td class="border p-3 text-center bg-yellow-300"><span>{{ $item->no_antrian }}</span></td>
+                            <td>&nbsp;</td>
+                            <td class="border p-3 bg-yellow-300"><span>{{ $item->pasien->nama_pasien }}</span></td>
+                        @endforeach
+                    </tr>
+                </table>
             </div>
         </div>
         <div class="relative col-span-8 p-4 flex items-center bg-[#4F959D] text-white">
