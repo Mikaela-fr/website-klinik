@@ -153,6 +153,10 @@
             };
 
             document.addEventListener('click', function(event) {
+                if (!document.webkitIsFullScreen) {
+                    document.documentElement.requestFullscreen();
+                }
+
                 if (!currentVideo) {
                     currentVideo = videoList.children[0];
                     currentVideo.volume = VIDEO_VOLUME;

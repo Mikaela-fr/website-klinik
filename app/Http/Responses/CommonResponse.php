@@ -31,7 +31,7 @@ class CommonResponse implements Responsable
             $this->httpCode >= 200 => 'Success!'
         };
 
-        return response()->json(
+        return response()->streamJson(
             data: [
                 'meta' => [
                     'status' => $this->httpCode,
@@ -40,8 +40,7 @@ class CommonResponse implements Responsable
                 ],
                 'data' => $this->data
             ],
-            status: $this->httpCode,
-            options: JSON_UNESCAPED_UNICODE
+            status: $this->httpCode
         );
     }
 
