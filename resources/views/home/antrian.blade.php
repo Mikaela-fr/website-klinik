@@ -10,15 +10,15 @@
         </div>
         <div class="col-span-4 row-span-5 p-4 bg-primary-light text-black">
             <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
-            <div id="patientList" class="overflow-hidden text-3xl">
-                <table class="w-full">
-                    <tr class="font-bold">
-                        @foreach ($pasienMenunggu as $item)
-                            <td class="border p-3 text-center bg-yellow-300"><span>{{ $item->no_antrian }}</span></td>
+            <div class="overflow-hidden text-3xl">
+                <table class="w-full" id="patientList">
+                    @foreach ($pasienMenunggu as $item)
+                        <tr class="font-bold" id="RM{{ $item->kode }}">
+                            <td class="border border-primary p-3 text-center bg-yellow-300"><span>{{ $item->no_antrian }}</span></td>
                             <td>&nbsp;</td>
-                            <td class="border p-3 bg-yellow-300"><span>{{ $item->pasien->nama_pasien }}</span></td>
-                        @endforeach
-                    </tr>
+                            <td class="border border-primary p-3 bg-yellow-300"><span>{{ $item->pasien->nama_pasien }}</span></td>
+                        </tr>
+                    @endforeach
                 </table>
             </div>
         </div>
@@ -44,10 +44,11 @@
 
             const addNewPatient = function(data, before) {
                 const content = `
-<div class="flex gap-2 p-2" id="RM${data.rekam_medis.kode}">
-    <span>${data.rekam_medis.no_antrian}</span>
-    <span>${data.rekam_medis.pasien.nama_pasien}</span>
-</div>`;
+<tr class="font-bold" id="RM${data.rekam_medis.kode}">
+    <td class="border p-3 text-center bg-yellow-300"><span>${data.rekam_medis.no_antrian}</span></td>
+    <td>&nbsp;</td>
+    <td class="border p-3 bg-yellow-300"><span>${data.rekam_medis.pasien.nama_pasien}</span></td>
+</tr>`;
                 if (before) {
                     patientList.innerHTML = content + patientList.innerHTML;
                     return;
