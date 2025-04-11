@@ -9,8 +9,8 @@
             @endforeach
         </div>
         <div class="col-span-4 row-span-5 p-4 bg-primary-light text-white">
-            <h2 class="p-4 text-2xl font-semibold text-center">Antrian</h2>
-            <div id="patientList" class="overflow-hidden text-lg">
+            <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
+            <div id="patientList" class="overflow-hidden text-3xl">
                 @foreach ($pasienMenunggu as $item)
                     <div class="flex gap-2 p-2" id="RM{{ $item->kode }}">
                         <span>{{ $item->no_antrian }}</span>
