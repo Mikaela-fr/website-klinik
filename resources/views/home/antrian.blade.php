@@ -1,7 +1,16 @@
 @extends('templates.base')
+@section('title', 'Antrian Pemeriksaan')
+
+@push('head')
+    <style>
+        .active-patient>td.border {
+            background: #86efac !important;
+        }
+    </style>
+@endpush
 
 @section('body')
-    <main class="grid grid-cols-12 grid-rows-5 h-screen overflow-hidden bg-[#000]">
+    <main class="grid grid-cols-12 grid-rows-5 h-screen overflow-hidden bg-[#000] text-gre">
         <div class="relative col-span-8 row-span-4 p-4 bg-[#4F959D]" id="videoContainer">
             @foreach ($multimedia as $item)
                 <video src="{{ asset(\Storage::url($item->isi)) }}" class="absolute top-0 left-0 w-full"
@@ -12,11 +21,20 @@
             <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
             <div class="overflow-hidden text-3xl">
                 <table class="w-full" id="patientList">
+                    <tr class="font-bold active-patient" id="RM{{ $pasienSekarang->kode }}">
+                        <td class="border border-primary p-3 text-center"><span>{{ $pasienSekarang->no_antrian }}</span>
+                        </td>
+                        <td>&nbsp;</td>
+                        <td class="border border-primary p-3"><span>{{ $pasienSekarang->pasien->nama_pasien }}</span>
+                        </td>
+                    </tr>
                     @foreach ($pasienMenunggu as $item)
                         <tr class="font-bold" id="RM{{ $item->kode }}">
-                            <td class="border border-primary p-3 text-center bg-yellow-300"><span>{{ $item->no_antrian }}</span></td>
+                            <td class="border border-primary p-3 text-center bg-yellow-300">
+                                <span>{{ $item->no_antrian }}</span></td>
                             <td>&nbsp;</td>
-                            <td class="border border-primary p-3 bg-yellow-300"><span>{{ $item->pasien->nama_pasien }}</span></td>
+                            <td class="border border-primary p-3 bg-yellow-300">
+                                <span>{{ $item->pasien->nama_pasien }}</span></td>
                         </tr>
                     @endforeach
                 </table>
@@ -62,19 +80,27 @@
                     console.log(data);
                     if (data.type == 'status') {
                         playAnnouncementAndCall(data.voice);
-                        const existingBlinking = document.querySelector('.animate-blink');
-                        if (existingBlinking) {
-                            if (existingBlinking.getAttribute('id') == 'RM' + data.rekam_medis.kode) return;
-                            existingBlinking.remove();
+                        const currentActivePatient = document.querySelector('.active-patient');
+                        if (currentActivePatient) {
+                            if (currentActivePatient.getAttribute('id') == 'RM' + data.rekam_medis.kode) return;
+                            currentActivePatient.remove();
                         }
                         const patientElement = document.querySelector('#RM' + data.rekam_medis.kode);
                         if (patientElement) {
                             patientElement.classList.add('animate-blink');
+                            patientElement.classList.add('active-patient');
                         } else {
                             addNewPatient(data, true);
                             document.querySelector('#RM' + data.rekam_medis.kode).classList.add(
                                 'animate-blink');
+                            document.querySelector('#RM' + data.rekam_medis.kode).classList.add(
+                                'active-patient');
                         }
+
+                        setTimeout(function() {
+                            const currentActivePatient = document.querySelector('.active-patient');
+                            currentActivePatient.classList.remove('animate-blink');
+                        }, 5000);
                     } else if (data.type == 'insert') {
                         addNewPatient(data);
                     } else if (data.type == 'delete') {

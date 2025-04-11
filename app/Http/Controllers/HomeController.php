@@ -17,6 +17,7 @@ class HomeController extends Controller
     public function antrian()
     {
         $pasienMenunggu = RekamMedis::whereDate('created_at', Carbon::today())->where('status', 'Menunggu')->orderBy('no_antrian', 'asc')->get();
+        $pasienSekarang = RekamMedis::whereDate('created_at', Carbon::today())->where('status', 'Selesai')->orderBy('updated_at', 'desc')->first();
 
         $multimedia = Carousel::where('jenis', 'like', 'video%')->orderBy('urutan', 'asc')->get();
         $teks = Carousel::where('jenis', 'text')->orderBy('urutan', 'asc')->get();
@@ -33,6 +34,6 @@ class HomeController extends Controller
 
         $teksPanjangGabung = implode(" | ", $teksPanjang);
 
-        return view('home.antrian', compact('multimedia', 'teksPanjangGabung', 'pasienMenunggu'));
+        return view('home.antrian', compact('multimedia', 'teksPanjangGabung', 'pasienMenunggu', 'pasienSekarang'));
     }
 }
