@@ -21,20 +21,24 @@
             <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
             <div class="overflow-hidden text-3xl">
                 <table class="w-full" id="patientList">
-                    <tr class="font-bold active-patient" id="RM{{ $pasienSekarang->kode }}">
-                        <td class="border border-primary p-3 text-center"><span>{{ $pasienSekarang->no_antrian }}</span>
-                        </td>
-                        <td>&nbsp;</td>
-                        <td class="border border-primary p-3"><span>{{ $pasienSekarang->pasien->nama_pasien }}</span>
-                        </td>
-                    </tr>
+                    @if ($pasienSekarang)
+                        <tr class="font-bold active-patient" id="RM{{ $pasienSekarang->kode }}">
+                            <td class="border border-primary p-3 text-center"><span>{{ $pasienSekarang->no_antrian }}</span>
+                            </td>
+                            <td>&nbsp;</td>
+                            <td class="border border-primary p-3"><span>{{ $pasienSekarang->pasien->nama_pasien }}</span>
+                            </td>
+                        </tr>
+                    @endif
                     @foreach ($pasienMenunggu as $item)
                         <tr class="font-bold" id="RM{{ $item->kode }}">
                             <td class="border border-primary p-3 text-center bg-yellow-300">
-                                <span>{{ $item->no_antrian }}</span></td>
+                                <span>{{ $item->no_antrian }}</span>
+                            </td>
                             <td>&nbsp;</td>
                             <td class="border border-primary p-3 bg-yellow-300">
-                                <span>{{ $item->pasien->nama_pasien }}</span></td>
+                                <span>{{ $item->pasien->nama_pasien }}</span>
+                            </td>
                         </tr>
                     @endforeach
                 </table>
@@ -80,12 +84,9 @@
                     console.log(data);
                     if (data.type == 'status') {
                         playAnnouncementAndCall(data.voice);
-                        const currentActivePatient = document.querySelector('.active-patient');
-                        if (currentActivePatient) {
-                            if (currentActivePatient.getAttribute('id') == 'RM' + data.rekam_medis.kode) return;
-                            currentActivePatient.remove();
-                        }
+
                         const patientElement = document.querySelector('#RM' + data.rekam_medis.kode);
+
                         if (patientElement) {
                             patientElement.classList.add('animate-blink');
                             patientElement.classList.add('active-patient');
@@ -98,9 +99,14 @@
                         }
 
                         setTimeout(function() {
-                            const currentActivePatient = document.querySelector('.active-patient');
-                            currentActivePatient.classList.remove('animate-blink');
+                            document.querySelector('.active-patient').classList.remove('animate-blink');
                         }, 5000);
+
+                        const currentActivePatient = document.querySelector('.active-patient');
+                        if (currentActivePatient) {
+                            if (currentActivePatient.getAttribute('id') == 'RM' + data.rekam_medis.kode) return;
+                            currentActivePatient.remove();
+                        }
                     } else if (data.type == 'insert') {
                         addNewPatient(data);
                     } else if (data.type == 'delete') {
