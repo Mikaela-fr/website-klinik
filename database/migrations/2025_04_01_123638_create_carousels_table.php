@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('carousels', function (Blueprint $table) {
             $table->id();
             $table->enum('jenis', ['image', 'video-mp4', 'video-youtube', 'text']);
-            $table->string('isi');
+            $table->text('isi');
             $table->integer('urutan');
             $table->timestamps();
         });
