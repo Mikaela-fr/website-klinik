@@ -61,6 +61,12 @@ class RekamMedisPasienController extends Controller
         $data['no_antrian'] = RekamMedis::whereDate('created_at', Carbon::today())->max('no_antrian') + 1;
 
         $pasien = Pasien::find($pasienId);
+
+        if ($request->has("alergi_obat")) {
+            $pasien->alergi_obat = $request->input('alergi_obat');
+            $pasien->save();
+        }
+
         $rekamMedis = $pasien->rekamMedis()->create($data);
         $rekamMedis = RekamMedis::with('pasien')->find($rekamMedis->kode);
 
@@ -120,7 +126,17 @@ class RekamMedisPasienController extends Controller
             }
 
             $pasien = Pasien::find($pasienId);
-            $pasien->rekamMedis()->where('kode', $id)->update($request->all());
+            $data = $request->all();
+            if ($data['alergi_obat'] != null && !empty($data['alergi_obat'])) {
+                $pasien->alergi_obat = $data['alergi_obat'];
+                $pasien->save();
+
+                unset($data['jenis_tindakan']);
+                unset($data['diagnosa_akhir']);
+                unset($data['keluhan_tambahan']);
+            }
+            unset($data['alergi_obat']);
+            $pasien->rekamMedis()->where('kode', $id)->update($data);
 
             if ($request->diagnosa_akhir) {
                 $existing = Penyakit::where('nama', $request->diagnosa_akhir)->get();
