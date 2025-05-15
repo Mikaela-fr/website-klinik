@@ -54,7 +54,7 @@ export default {
           '100%': { opacity: '0' }
         },
         marquee: {
-          '0%': { transform: 'translateX(100%)' },
+          '0%': { transform: 'translateX(100vh)' },
           '100%': { transform: 'translateX(-100%)' },
         },
         "fade-in": {

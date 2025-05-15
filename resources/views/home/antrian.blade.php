@@ -39,7 +39,7 @@
             </div>
         </header>
         <main class="flex items-center justify-center min-h-[80vh] gap-8">
-            <div class="min-h-[60vh] w-1/4">
+            <div class="min-h-[70vh] w-1/4">
                 <h2
                     class="text-5xl font-bold uppercase text-center p-2 bg-gradient-to-r from-blue-200 to-blue-500 rounded-full mb-8">
                     Antrian</h2>
@@ -68,10 +68,10 @@
                     </div>
                 </div>
             </div>
-            <div id="videoContainer" class="relative w-8/12 min-h-[60vh]">
+            <div id="videoContainer" class="relative w-8/12 min-h-[70vh]">
                 @foreach ($multimedia as $item)
                     <video src="{{ asset(\Storage::url($item->isi)) }}"
-                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full"
+                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-full"
                         style="z-index: {{ $loop->index == 0 ? 1 : -1 }}"></video>
                 @endforeach
             </div>
