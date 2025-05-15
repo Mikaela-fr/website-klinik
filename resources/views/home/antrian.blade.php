@@ -31,7 +31,7 @@
                 @endphp
                 <div>
                     <p class="text-4xl uppercase">{{ $day }}</p>
-                    <p class="text-2xl">{{ $d }}</p>
+                    <p class="text-2xl text-yellow-300">{{ $d }}</p>
                 </div>
                 <div class="text-4xl" id="dynamicTime">
                     {{ $time }}
