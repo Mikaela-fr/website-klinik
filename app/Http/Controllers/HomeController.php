@@ -28,10 +28,6 @@ class HomeController extends Controller
             $teksPanjang[] = $item->isi;
         }
 
-        if (count($teksPanjang) > 1) {
-            array_shift($teksPanjang);
-        }
-
         $teksPanjangGabung = implode(" | ", $teksPanjang);
 
         return view('home.antrian', compact('multimedia', 'teksPanjangGabung', 'pasienMenunggu', 'pasienSekarang'));

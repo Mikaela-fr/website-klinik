@@ -3,58 +3,106 @@
 
 @push('head')
     <style>
-        .active-patient>td.border {
-            background: #86efac !important;
+        .active-patient>div.cell {
+            background: #16a34a !important;
+            color: #fde047 !important;
         }
     </style>
 @endpush
 
 @section('body')
-    <main class="grid grid-cols-12 grid-rows-5 h-screen overflow-hidden bg-[#000] text-gre">
-        <div class="relative col-span-8 row-span-4 p-4 bg-[#4F959D]" id="videoContainer">
-            @foreach ($multimedia as $item)
-                <video src="{{ asset(\Storage::url($item->isi)) }}" class="absolute top-0 left-0 w-full"
-                    style="z-index: {{ $loop->index == 0 ? 1 : -1 }}"></video>
-            @endforeach
-        </div>
-        <div class="col-span-4 row-span-5 p-4 bg-primary-light text-black">
-            <h2 class="p-4 text-4xl font-semibold text-center">Antrian</h2>
-            <div class="overflow-hidden text-3xl">
-                <table class="w-full" id="patientList">
-                    @if ($pasienSekarang)
-                        <tr class="font-bold active-patient" id="RM{{ $pasienSekarang->kode }}">
-                            <td class="border border-primary p-3 text-center"><span>{{ $pasienSekarang->no_antrian }}</span>
-                            </td>
-                            <td>&nbsp;</td>
-                            <td class="border border-primary p-3"><span>{{ $pasienSekarang->pasien->nama_pasien }}</span>
-                            </td>
-                        </tr>
-                    @endif
-                    @foreach ($pasienMenunggu as $item)
-                        <tr class="font-bold" id="RM{{ $item->kode }}">
-                            <td class="border border-primary p-3 text-center bg-yellow-300">
-                                <span>{{ $item->no_antrian }}</span>
-                            </td>
-                            <td>&nbsp;</td>
-                            <td class="border border-primary p-3 bg-yellow-300">
-                                <span>{{ $item->pasien->nama_pasien }}</span>
-                            </td>
-                        </tr>
-                    @endforeach
-                </table>
+    <div class="pt-4 pr-4 m-0 bg-[url('/images/background.jpg')] bg-cover bg-center min-h-screen">
+        <header class="bg-purple-400 flex rounded-br-3xl">
+            <div class="flex p-2 gap-4 ml-auto items-center">
+                <img src="{{ asset('images/logo.png') }}" alt="" class="w-20 h-20">
+                <div class="text-white text-center">
+                    <h1 class="text-6xl font-bold">RUMAH SUNAT NURYANA HUSADA</h1>
+                    <p class="text-2xl font-bold">KEBUMEN - BATURRADEN</p>
+                </div>
             </div>
-        </div>
-        <div class="relative col-span-8 p-4 flex items-center bg-[#4F959D] text-white">
+            <div class="ml-auto flex font-bold items-center gap-4 bg-sky-400 text-white p-4 rounded-tl-3xl rounded-br-3xl">
+                @php
+                    $date = \Carbon\Carbon::now();
+
+                    $d = $date->translatedFormat('d F y');
+                    $day = $date->translatedFormat('l');
+
+                    $time = $date->format('H:i');
+                @endphp
+                <div>
+                    <p class="text-4xl uppercase">{{ $day }}</p>
+                    <p>{{ $d }}</p>
+                </div>
+                <div class="text-4xl" id="dynamicTime">
+                    {{ $time }}
+                </div>
+            </div>
+        </header>
+        <main class="flex items-center justify-center min-h-[80vh] gap-8">
+            <div class="min-h-[60vh] w-1/4">
+                <h2
+                    class="text-5xl font-bold uppercase text-center p-2 bg-gradient-to-r from-blue-200 to-blue-500 rounded-full mb-8">
+                    Antrian</h2>
+                <div class="overflow-hidden text-4xl">
+                    <div class="w-full gap-4" id="patientList">
+                        @if ($pasienSekarang)
+                            <div class="font-bold text-green-600 flex gap-4 items-center mb-4 active-patient" id="RM{{ $pasienSekarang->kode }}">
+                                <div class="cell p-3 text-center rounded-full">
+                                    <span>{{ $pasienSekarang->no_antrian }}</span>
+                                </div>
+                                <div class="cell p-3 text-center rounded-full w-full">
+                                    <span>{{ $pasienSekarang->pasien->nama_pasien }}</span>
+                                </div>
+                            </div>
+                        @endif
+                        @foreach ($pasienMenunggu as $item)
+                            <div class="font-bold text-green-600 flex gap-4 items-center mb-4" id="RM{{ $item->kode }}">
+                                <div class="cell p-3 text-center bg-yellow-300 rounded-full">
+                                    <span>{{ $item->no_antrian }}</span>
+                                </div>
+                                <div class="cell w-full p-3 bg-yellow-300 rounded-full text-center">
+                                    <span>{{ $item->pasien->nama_pasien }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+            <div id="videoContainer" class="relative w-8/12 min-h-[60vh]">
+                @foreach ($multimedia as $item)
+                    <video src="{{ asset(\Storage::url($item->isi)) }}"
+                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full"
+                        style="z-index: {{ $loop->index == 0 ? 1 : -1 }}"></video>
+                @endforeach
+            </div>
+        </main>
+        <footer class="relative p-4 flex items-center bg-gradient-to-r from-blue-400 to-green-400 text-white">
             <div class="overflow-hidden whitespace-nowrap">
-                <span class="marquee-text inline-block animate-marquee min-w-full text-4xl">
+                <span class="marquee-text inline-block animate-marquee min-w-[100vw] text-4xl">
                     {{ $teksPanjangGabung }}
                 </span>
             </div>
-        </div>
-    </main>
+        </footer>
+    </div>
 @endsection
 
 @push('scripts')
+    <script>
+        const dynamicTime = document.querySelector('#dynamicTime');
+
+        function updateTime() {
+            const currentDate = new Date();
+            const hours = currentDate.getHours().toString();
+            const minutes = currentDate.getMinutes().toString();
+
+            dynamicTime.innerText = hours.padStart(2, "0") + ":" + minutes.padStart(2, "0");
+
+            setTimeout(updateTime, 1000);
+        }
+
+        updateTime();
+    </script>
+
     <script>
         let announcementAudio;
 
@@ -66,11 +114,15 @@
 
             const addNewPatient = function(data, before) {
                 const content = `
-<tr class="font-bold" id="RM${data.rekam_medis.kode}">
-    <td class="border p-3 text-center bg-yellow-300"><span>${data.rekam_medis.no_antrian}</span></td>
-    <td>&nbsp;</td>
-    <td class="border p-3 bg-yellow-300"><span>${data.rekam_medis.pasien.nama_pasien}</span></td>
-</tr>`;
+<div class="font-bold text-green-600 flex gap-4 items-center mb-4" id="RM${data.rekam_medis.kode}">
+    <div class="cell p-3 text-center bg-yellow-300 rounded-full">
+        <span>${data.rekam_medis.no_antrian}</span>
+    </div>
+    <div class="cell w-full p-3 bg-yellow-300 rounded-full text-center">
+        <span>${data.rekam_medis.pasien.nama_pasien}</span>
+    </div>
+</div>
+`;
                 if (before) {
                     patientList.innerHTML = content + patientList.innerHTML;
                     return;
