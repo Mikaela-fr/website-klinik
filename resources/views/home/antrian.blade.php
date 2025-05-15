@@ -24,14 +24,14 @@
                 @php
                     $date = \Carbon\Carbon::now();
 
-                    $d = $date->translatedFormat('d F y');
+                    $d = $date->translatedFormat('d F Y');
                     $day = $date->translatedFormat('l');
 
                     $time = $date->format('H:i');
                 @endphp
                 <div>
                     <p class="text-4xl uppercase">{{ $day }}</p>
-                    <p>{{ $d }}</p>
+                    <p class="text-2xl">{{ $d }}</p>
                 </div>
                 <div class="text-4xl" id="dynamicTime">
                     {{ $time }}
