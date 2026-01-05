@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\RegionController;
 use App\Http\Controllers\Api\RekamMedisPasienController;
 use App\Http\Controllers\Api\SatuanObatController;
 use App\Http\Controllers\Api\SKDController;
+use App\Http\Controllers\Api\StatsController;
 use App\Http\Controllers\Api\TipeObatController;
 use App\Http\Controllers\ObatController;
 use App\Http\Controllers\ResepObatController;
@@ -19,12 +20,23 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::get('/regions/{parent}', [RegionController::class, 'index']);
 
-Route::middleware('auth:sanctum')->group(function() {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         $user = User::where('kode', $request->user()->kode)->with('roles')->first();
         return CommonResponse::ok($user->toArray());
     });
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // --- API Insights/Stats Routes (tidak perlu diubah) ---
+    Route::prefix('stats')->group(function () {
+        Route::get('/kunjungan-pasien', [StatsController::class, 'kunjunganPasien']);
+        Route::get('/waktu-tunggu', [StatsController::class, 'waktuTunggu']);
+        Route::get('/jenis-tren-penyakit', [StatsController::class, 'jenisTrenPenyakit']);
+        Route::get('/pendapatan-pengeluaran', [StatsController::class, 'pendapatanPengeluaran']);
+        Route::get('/margin-keuntungan', [StatsController::class, 'marginKeuntungan']);
+        Route::get('/inventory-turnover-rate', [StatsController::class, 'inventoryTurnoverRate']);
+    });
+
     Route::get('/medical-records', [RekamMedisPasienController::class, 'indexAll']);
     Route::get('/medical-records/{recordId}', [RekamMedisPasienController::class, 'showIndependent']);
     Route::delete('/medical-records/{recordId}', [RekamMedisPasienController::class, 'destroy']);
