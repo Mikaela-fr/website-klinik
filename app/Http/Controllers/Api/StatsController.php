@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Responses\CommonResponse;
+use App\Models\RekamMedis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Http\Controllers\Controller;
+use App\Http\Responses\CommonResponse;
 
 class StatsController extends Controller
 {
@@ -29,12 +30,29 @@ class StatsController extends Controller
     {
         [$startDate, $endDate] = $this->getFilterDates($request);
 
-        // TODO: Gunakan ->whereBetween('tanggal_kolom', [$startDate, $endDate])
+        // // TODO: Gunakan ->whereBetween('tanggal_kolom', [$startDate, $endDate])
+        // $data = [
+        //     'time_series' => [], // Eloquent: count kunjungan group by date
+        //     'per_wilayah' => [], // Eloquent: count kunjungan group by wilayah
+        // ];
+        $timeSeries = RekamMedis::selectRaw('DATE(created_at) as date, count(*) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+
+        $perWilayah = RekamMedis::query()
+            ->join('pasiens', 'rekam_medis.no_pasien', '=', 'pasiens.no_pasien')
+            ->selectRaw('pasiens.alamat as wilayah, count(*) as total')
+            ->groupBy('wilayah')
+            ->orderByDesc('total')
+            ->get();
+
         $data = [
-            'time_series' => [], // Eloquent: count kunjungan group by date
-            'per_wilayah' => [], // Eloquent: count kunjungan group by wilayah
+            'time_series' => $timeSeries,
+            'per_wilayah' => $perWilayah
         ];
 
+        // Ingat: CommonResponse::ok() di kode temanmu hanya menerima 1 parameter ($data)
         return CommonResponse::ok($data, "Statistik kunjungan pasien periode $startDate s/d $endDate berhasil diambil");
     }
 
