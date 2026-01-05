@@ -12,11 +12,13 @@ use App\Http\Controllers\Api\TipeObatController;
 use App\Http\Controllers\ObatController;
 use App\Http\Controllers\ResepObatController;
 use App\Http\Responses\CommonResponse;
+
 use App\Models\Obat;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/stats/kunjungan-pasien', [StatsController::class, 'kunjunganPasien']);
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
 Route::get('/regions/{parent}', [RegionController::class, 'index']);
 
@@ -42,7 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/medical-records/{recordId}', [RekamMedisPasienController::class, 'destroy']);
     Route::put('/medical-records/{recordId}/change-status', [RekamMedisPasienController::class, 'changeStatus']);
     Route::put('/medical-records/{recordId}/prescriptions/pay', [ResepObatController::class, 'pay']);
-
+    
     Route::get('/skd/current-numbers', [SKDController::class, 'getCurrentNumbers']);
     Route::post('/skd', [SKDController::class, 'saveLetter']);
     Route::get('/skd/detail', [SKDController::class, 'show']);
