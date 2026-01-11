@@ -16,6 +16,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use function Symfony\Component\Clock\now;
+
 class RekamMedisPasienController extends Controller
 {
     /**
@@ -184,6 +186,11 @@ class RekamMedisPasienController extends Controller
         }
 
         $rekamMedis = RekamMedis::find($id);
+
+        if (strtolower($rekamMedis->status) == 'menunggu' && strtolower(request('status')) == 'selesai') {
+            $rekamMedis->waktu_dilayani = now();
+        }
+
         $rekamMedis->status = request('status');
         $rekamMedis->save();
 
