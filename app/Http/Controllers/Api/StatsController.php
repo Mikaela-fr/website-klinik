@@ -85,6 +85,19 @@ class StatsController extends Controller
             ->values();
 
         // =====================
+        // INSIGHT: LAYANAN TERLAMA
+        // =====================
+        $layananTerlama = $perLayanan->sortByDesc('avg_minutes')->first();
+
+        $insightTerlama = $layananTerlama
+            ? [
+                'layanan' => $layananTerlama['layanan'],
+                'avg_minutes' => $layananTerlama['avg_minutes'],
+                'pesan' => "Waktu tunggu terlama terjadi pada {$layananTerlama['layanan']} dengan rata-rata {$layananTerlama['avg_minutes']} menit",
+            ]
+            : null;
+
+        // =====================
         // RATA-RATA PERIODE AKTIF
         // =====================
         $currentAvg = RekamMedis::query()
@@ -124,10 +137,11 @@ class StatsController extends Controller
                 'rata_rata' => $currentAvg,
                 'perbedaan' => $diffMinutes,
                 'keterangan' => $keterangan,
+                'layanan_terlama' => $insightTerlama,
             ],
         ];
 
-        return CommonResponse::ok($data, 'Data waktu tunggu dimuat');
+        return CommonResponse::ok($data);
     }
 
     /**
