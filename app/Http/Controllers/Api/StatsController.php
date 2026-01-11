@@ -174,77 +174,126 @@ class StatsController extends Controller
     }
 
 
-
 public function marginKeuntungan(Request $request)
 {
-    // =========================
-    // 1. Ambil range tanggal
-    // =========================
-    $start = $request->start_date 
-        ? $request->start_date . ' 00:00:00' 
-        : now()->startOfMonth();
-
-    $end = $request->end_date 
-        ? $request->end_date . ' 23:59:59' 
-        : now()->endOfMonth();
+    $filter = $request->filter ?? 'bulanan';
 
     // =========================
-    // 2. TOTAL MODAL OBAT
-    // dari detail_pembelian_obats.total
+    // FORMAT GROUPING PERIODE
     // =========================
-    $totalModal = DB::table('detail_pembelian_obats')
+    switch ($filter) {
+        case 'mingguan':
+            $groupBy = "YEARWEEK(%s, 1)";
+            break;
+
+        case 'tahunan':
+            $groupBy = "YEAR(%s)";
+            break;
+
+        default:
+            $groupBy = "DATE_FORMAT(%s, '%Y-%m')";
+            $filter = 'bulanan';
+    }
+
+    // =========================
+    // PENGELUARAN (MODAL OBAT)
+    // =========================
+    $modalData = DB::table('detail_pembelian_obats')
         ->join(
             'pembelian_obats',
             'detail_pembelian_obats.kode_pembelian',
             '=',
             'pembelian_obats.no_transaksi'
         )
-        ->whereBetween('pembelian_obats.tanggal', [$start, $end])
-        ->sum('detail_pembelian_obats.total');
+        ->selectRaw(
+            str_replace('%s', 'pembelian_obats.tanggal', $groupBy) . ' AS periode,
+            SUM(detail_pembelian_obats.total) AS total'
+        )
+        ->groupBy('periode')
+        ->get();
+
+    $totalModal = $modalData->sum('total');
+    $jumlahPeriodeModal = $modalData->count();
 
     // =========================
-    // 3. TOTAL PENJUALAN OBAT
-    // dari detail_resep_obats.total
+    // PEMASUKAN OBAT
     // =========================
-    $pendapatanObat = DB::table('detail_resep_obats')
-        ->whereBetween('created_at', [$start, $end])
-        ->sum('total');
+    $obatData = DB::table('detail_resep_obats')
+        ->selectRaw(
+            str_replace('%s', 'created_at', $groupBy) . ' AS periode,
+            SUM(total) AS total'
+        )
+        ->groupBy('periode')
+        ->get();
 
     // =========================
-    // 4. TOTAL PENDAPATAN LAYANAN
-    // join rekam_medis.kode_layanan -> layanans.nama_layanan
+    // PEMASUKAN LAYANAN
     // =========================
-    $pendapatanLayanan = DB::table('rekam_medis')
+    $layananData = DB::table('rekam_medis')
         ->join(
             'layanans',
             'rekam_medis.kode_layanan',
             '=',
             'layanans.nama_layanan'
         )
-        ->whereBetween('rekam_medis.created_at', [$start, $end])
-        ->sum('layanans.harga');
+        ->selectRaw(
+            str_replace('%s', 'rekam_medis.created_at', $groupBy) . ' AS periode,
+            SUM(layanans.harga) AS total'
+        )
+        ->groupBy('periode')
+        ->get();
 
     // =========================
-    // 5. HITUNG TOTAL & MARGIN
+    // TOTAL PEMASUKAN
     // =========================
-    $totalPendapatan = $pendapatanObat + $pendapatanLayanan;
-    $marginKeuntungan = $totalPendapatan - $totalModal;
+    $totalPendapatan = $obatData->sum('total') + $layananData->sum('total');
+
+    $jumlahPeriodePendapatan = max(
+        $obatData->count(),
+        $layananData->count()
+    );
 
     // =========================
-    // 6. RESPONSE API
+    // RATA-RATA
+    // =========================
+    $rataPendapatan = $jumlahPeriodePendapatan > 0
+        ? $totalPendapatan / $jumlahPeriodePendapatan
+        : 0;
+
+    $rataPengeluaran = $jumlahPeriodeModal > 0
+        ? $totalModal / $jumlahPeriodeModal
+        : 0;
+
+    // =========================
+    // MARGIN
+    // =========================
+    $marginNominal = $totalPendapatan - $totalModal;
+    $marginPersen = $totalPendapatan > 0
+        ? round(($marginNominal / $totalPendapatan) * 100, 2)
+        : 0;
+
+    // =========================
+    // LABEL
+    // =========================
+    $label = $marginNominal >= 0 ? 'Positif' : 'Negatif';
+
+    // =========================
+    // RESPONSE
     // =========================
     return CommonResponse::ok([
-        'periode' => [
-            'start' => $start,
-            'end' => $end,
-        ],
-        'modal_obat' => (int) $totalModal,
-        'pendapatan_obat' => (int) $pendapatanObat,
-        'pendapatan_layanan' => (int) $pendapatanLayanan,
+        'filter' => $filter,
         'total_pendapatan' => (int) $totalPendapatan,
-        'margin_keuntungan' => (int) $marginKeuntungan,
-    ], 'Berhasil mengambil data margin keuntungan');
+        'total_pengeluaran' => (int) $totalModal,
+        'margin_nominal' => (int) $marginNominal,
+        'margin_percentage' => $marginPersen,
+        'label' => $label,
+        'rata_rata' => [
+            'pendapatan' => (int) $rataPendapatan,
+            'pengeluaran' => (int) $rataPengeluaran
+        ]
+    ], 'Data margin keuntungan berhasil diambil');
 }
+
 
 
 
