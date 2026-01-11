@@ -8,6 +8,10 @@ use App\Models\RekamMedis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\DetailPembelianObat;
+use App\Models\DetailResepObat;
+use App\Models\Layanan;
+
 use Illuminate\Support\Facades\Log;
 
 class StatsController extends Controller
@@ -155,58 +159,79 @@ class StatsController extends Controller
         return CommonResponse::ok($data, "Statistik keuangan periode $startDate s/d $endDate berhasil diambil");
     }
 
-    /**
-     * 5. Margin Keuntungan
-     */
-   public function marginKeuntungan(Request $request)
+
+
+public function marginKeuntungan(Request $request)
 {
-    [$startDate, $endDate] = $this->getFilterDates($request);
+    // =========================
+    // 1. Ambil range tanggal
+    // =========================
+    $start = $request->start_date 
+        ? $request->start_date . ' 00:00:00' 
+        : now()->startOfMonth();
 
-      // ======================
-    // 1. TOTAL MODAL
-    // ======================
-    $totalModal = 50000000; // contoh total pengeluaran operasional
+    $end = $request->end_date 
+        ? $request->end_date . ' 23:59:59' 
+        : now()->endOfMonth();
 
-    // ======================
-    // 2. TOTAL PENDAPATAN
-    // ======================
-    $totalPendapatan = 62500000; // contoh total pendapatan klinik
+    // =========================
+    // 2. TOTAL MODAL OBAT
+    // dari detail_pembelian_obats.total
+    // =========================
+    $totalModal = DB::table('detail_pembelian_obats')
+        ->join(
+            'pembelian_obats',
+            'detail_pembelian_obats.kode_pembelian',
+            '=',
+            'pembelian_obats.no_transaksi'
+        )
+        ->whereBetween('pembelian_obats.tanggal', [$start, $end])
+        ->sum('detail_pembelian_obats.total');
 
-    // ======================
-    // 3. HITUNG MARGIN
-    // ======================
-    $marginNominal = $totalPendapatan - $totalModal;
+    // =========================
+    // 3. TOTAL PENJUALAN OBAT
+    // dari detail_resep_obats.total
+    // =========================
+    $pendapatanObat = DB::table('detail_resep_obats')
+        ->whereBetween('created_at', [$start, $end])
+        ->sum('total');
 
-    $marginPercentage = $totalModal > 0
-        ? round(($marginNominal / $totalModal) * 100)
-        : 0;
+    // =========================
+    // 4. TOTAL PENDAPATAN LAYANAN
+    // join rekam_medis.kode_layanan -> layanans.nama_layanan
+    // =========================
+    $pendapatanLayanan = DB::table('rekam_medis')
+        ->join(
+            'layanans',
+            'rekam_medis.kode_layanan',
+            '=',
+            'layanans.nama_layanan'
+        )
+        ->whereBetween('rekam_medis.created_at', [$start, $end])
+        ->sum('layanans.harga');
 
-    // ======================
-    // 4. LABEL
-    // ======================
-    if ($marginNominal > 0) {
-        $label = "Positif";
-    } elseif ($marginNominal < 0) {
-        $label = "Negatif";
-    } else {
-        $label = "Impas";
-    }
+    // =========================
+    // 5. HITUNG TOTAL & MARGIN
+    // =========================
+    $totalPendapatan = $pendapatanObat + $pendapatanLayanan;
+    $marginKeuntungan = $totalPendapatan - $totalModal;
 
-    // ======================
-    // 5. RESPONSE DATA
-    // ======================
-    $data = [
-        'total_modal' => $totalModal,
-        'margin_nominal' => $marginNominal,
-        'margin_percentage' => $marginPercentage,
-        'label' => $label,
-    ];
-
-    return CommonResponse::ok(
-        $data,
-        "Data margin periode $startDate s/d $endDate berhasil diambil"
-    );
+    // =========================
+    // 6. RESPONSE API
+    // =========================
+    return CommonResponse::ok([
+        'periode' => [
+            'start' => $start,
+            'end' => $end,
+        ],
+        'modal_obat' => (int) $totalModal,
+        'pendapatan_obat' => (int) $pendapatanObat,
+        'pendapatan_layanan' => (int) $pendapatanLayanan,
+        'total_pendapatan' => (int) $totalPendapatan,
+        'margin_keuntungan' => (int) $marginKeuntungan,
+    ], 'Berhasil mengambil data margin keuntungan');
 }
+
 
 
     /**
