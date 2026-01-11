@@ -158,19 +158,56 @@ class StatsController extends Controller
     /**
      * 5. Margin Keuntungan
      */
-    public function marginKeuntungan(Request $request)
-    {
-        [$startDate, $endDate] = $this->getFilterDates($request);
+   public function marginKeuntungan(Request $request)
+{
+    [$startDate, $endDate] = $this->getFilterDates($request);
 
-        $data = [
-            'total_modal' => 0, // Total pengeluaran operasional
-            'margin_nominal' => 0, // Pendapatan - Pengeluaran
-            'margin_percentage' => 0, // (Margin Nominal / Pendapatan) * 100
-            'label' => '', // "Positif" atau "Negatif"
-        ];
+      // ======================
+    // 1. TOTAL MODAL
+    // ======================
+    $totalModal = 50000000; // contoh total pengeluaran operasional
 
-        return CommonResponse::ok($data, "Data margin periode $startDate s/d $endDate berhasil diambil");
+    // ======================
+    // 2. TOTAL PENDAPATAN
+    // ======================
+    $totalPendapatan = 62500000; // contoh total pendapatan klinik
+
+    // ======================
+    // 3. HITUNG MARGIN
+    // ======================
+    $marginNominal = $totalPendapatan - $totalModal;
+
+    $marginPercentage = $totalModal > 0
+        ? round(($marginNominal / $totalModal) * 100)
+        : 0;
+
+    // ======================
+    // 4. LABEL
+    // ======================
+    if ($marginNominal > 0) {
+        $label = "Positif";
+    } elseif ($marginNominal < 0) {
+        $label = "Negatif";
+    } else {
+        $label = "Impas";
     }
+
+    // ======================
+    // 5. RESPONSE DATA
+    // ======================
+    $data = [
+        'total_modal' => $totalModal,
+        'margin_nominal' => $marginNominal,
+        'margin_percentage' => $marginPercentage,
+        'label' => $label,
+    ];
+
+    return CommonResponse::ok(
+        $data,
+        "Data margin periode $startDate s/d $endDate berhasil diambil"
+    );
+}
+
 
     /**
      * 6. Inventory Turnover Rate (Bar Chart per Kategori Obat)
