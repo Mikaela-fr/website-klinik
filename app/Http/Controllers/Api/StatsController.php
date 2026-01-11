@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Responses\CommonResponse;
+use App\Models\RekamMedis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class StatsController extends Controller
 {
@@ -17,9 +20,12 @@ class StatsController extends Controller
     {
         // Mengambil dari query param, jika tidak ada gunakan default awal & akhir bulan berjalan
         $startDate = $request->query('start_date', Carbon::now()->startOfMonth()->toDateString());
-        $endDate   = $request->query('end_date', Carbon::now()->endOfMonth()->toDateString());
+        $endDate = $request->query('end_date', Carbon::now()->endOfMonth()->toDateString());
 
-        return [$startDate, $endDate];
+        $parsedStartDate = Carbon::parse($startDate)->startOfMonth();
+        $parsedEndDate = Carbon::parse($endDate)->endOfMonth();
+
+        return [$parsedStartDate, $parsedEndDate];
     }
 
     /**
@@ -45,11 +51,79 @@ class StatsController extends Controller
     {
         [$startDate, $endDate] = $this->getFilterDates($request);
 
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+
+        // Durasi periode (dalam detik)
+        $durationInSeconds = $start->diffInSeconds($end);
+
+        // Periode sebelumnya
+        $prevStart = $start->copy()->subSeconds($durationInSeconds);
+        $prevEnd = $start;
+
+        // =====================
+        // DATA PER LAYANAN
+        // =====================
+        $perLayanan = RekamMedis::query()
+            ->select(['jenis_tindakan as layanan', DB::raw('AVG(TIMESTAMPDIFF(MINUTE, created_at, waktu_dilayani)) as avg_minutes')])
+            ->whereNotNull('jenis_tindakan')
+            ->whereNotNull('waktu_dilayani')
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('jenis_tindakan')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'layanan' => $item->layanan,
+                    'avg_minutes' => (int) round($item->avg_minutes),
+                    'target_threshold' => 15,
+                ];
+            })
+            ->values();
+
+        // =====================
+        // RATA-RATA PERIODE AKTIF
+        // =====================
+        $currentAvg = RekamMedis::query()
+            ->whereNotNull('waktu_dilayani')
+            ->whereBetween('created_at', [$start, $end])
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, created_at, waktu_dilayani)) as avg'))
+            ->value('avg');
+
+        // =====================
+        // RATA-RATA PERIODE SEBELUMNYA
+        // =====================
+        $previousAvg = RekamMedis::query()
+            ->whereNotNull('waktu_dilayani')
+            ->whereBetween('created_at', [$prevStart, $prevEnd])
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, created_at, waktu_dilayani)) as avg'))
+            ->value('avg');
+
+        $currentAvg = $currentAvg ? round($currentAvg) : 0;
+        $previousAvg = $previousAvg ? round($previousAvg) : 0;
+
+        // =====================
+        // RINGKASAN
+        // =====================
+        $diffMinutes = $currentAvg - $previousAvg;
+
+        if ($diffMinutes > 0) {
+            $keterangan = "Bertambah {$diffMinutes} menit dari periode terakhir";
+        } elseif ($diffMinutes < 0) {
+            $keterangan = 'Berkurang ' . abs($diffMinutes) . ' menit dari periode terakhir';
+        } else {
+            $keterangan = 'Tidak ada perubahan dibanding periode terakhir';
+        }
+
         $data = [
-            'per_layanan' => [], // Eloquent: avg(waktu_selesai - waktu_daftar) per layanan
+            'per_layanan' => $perLayanan,
+            'ringkasan' => [
+                'rata_rata' => $currentAvg,
+                'perbedaan' => $diffMinutes,
+                'keterangan' => $keterangan,
+            ],
         ];
 
-        return CommonResponse::ok($data, "Statistik waktu tunggu periode $startDate s/d $endDate berhasil diambil");
+        return CommonResponse::ok($data, 'Data waktu tunggu dimuat');
     }
 
     /**
@@ -60,7 +134,7 @@ class StatsController extends Controller
         [$startDate, $endDate] = $this->getFilterDates($request);
 
         $data = [
-            'top_10_penyakit'      => [], // Eloquent: count penyakit limit 10
+            'top_10_penyakit' => [], // Eloquent: count penyakit limit 10
             'top_wilayah_penyakit' => [], // Eloquent: group by wilayah & penyakit
         ];
 
@@ -89,10 +163,10 @@ class StatsController extends Controller
         [$startDate, $endDate] = $this->getFilterDates($request);
 
         $data = [
-            'total_modal'       => 0, // Total pengeluaran operasional
-            'margin_nominal'    => 0, // Pendapatan - Pengeluaran
+            'total_modal' => 0, // Total pengeluaran operasional
+            'margin_nominal' => 0, // Pendapatan - Pengeluaran
             'margin_percentage' => 0, // (Margin Nominal / Pendapatan) * 100
-            'label'             => '', // "Positif" atau "Negatif"
+            'label' => '', // "Positif" atau "Negatif"
         ];
 
         return CommonResponse::ok($data, "Data margin periode $startDate s/d $endDate berhasil diambil");
